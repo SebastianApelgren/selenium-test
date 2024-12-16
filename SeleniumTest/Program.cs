@@ -1,13 +1,40 @@
-﻿namespace SeleniumTest
-{
-    internal class Program
-    {
-        static void Main(string[] args)
-        {
-            string apiKey = SecretManager.GetOpenAiApiKey();
+﻿using OpenAI.Chat;
+using SeleniumTest.Helper;
 
-            Console.Write(apiKey);
-            Console.ReadLine();
+namespace SeleniumTest
+{
+    public class Program
+    {
+        public async static Task Main(string[] args)
+        {
+            OpenAiHelper openAiHelper = new OpenAiHelper(SecretManager.GetOpenAiApiKey());
+
+            Console.WriteLine("Hello, what website do you want to go to?");
+            string query = Console.ReadLine();
+
+            List<ChatMessage> chatMessages = await openAiHelper.CompleteMessagesAsync(query);
+
+            int counter = 0;
+
+            while (true)
+            {
+
+                for (int i = 0; i < chatMessages.Count; i++)
+                {
+                    Console.WriteLine(chatMessages[i]);
+                    counter++;
+                }
+
+                Console.WriteLine("What do you want to do next?");
+                query = Console.ReadLine();
+
+                if(query == "bye")
+                {
+                    break;
+                }
+
+                chatMessages = await openAiHelper.CompleteMessagesAsync(query, chatMessages);
+            }
         }
 
         static void StartYoutubeAndSearchTest()
@@ -26,7 +53,7 @@
             browser.SendKeysToInput("#center > yt-searchbox > div.ytSearchboxComponentInputBox > form > input", searchQuery);
             browser.ClickButton("#center > yt-searchbox > button");
 
-            string htmlSource = browser.GetCleanedHtml();
+            string htmlSource = browser.GetHtml();
             int tokenAmount = htmlSource.TokenCounter();
 
             Console.WriteLine(tokenAmount);

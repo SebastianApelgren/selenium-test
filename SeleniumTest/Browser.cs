@@ -1,6 +1,7 @@
 ﻿using HtmlAgilityPack;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using System.Text;
 
 namespace SeleniumTest
 {
@@ -20,7 +21,7 @@ namespace SeleniumTest
             _driver.Navigate().GoToUrl(url);
         }
 
-        public string GetCleanedHtml()
+        public string GetHtml()
         {
             // Get the HTML source of the current page
             string html = _driver.PageSource;
@@ -35,22 +36,61 @@ namespace SeleniumTest
                 .ToList()
                 .ForEach(n => n.Remove());
 
+            // Extract text content from the HTML
+            var textContent = new StringBuilder();
+            foreach (var node in doc.DocumentNode.SelectNodes("//text()[normalize-space()]"))
+            {
+                textContent.AppendLine(node.InnerText.Trim());
+            }
+
             // Return the cleaned HTML
             return doc.DocumentNode.OuterHtml;
         }
 
-        public void ClickButton(string cssSelector)
+        public string ClickButton(string cssSelector)
         {
-            // Find the button element by its CSS selector and click it
-            IWebElement button = _driver.FindElement(By.CssSelector(cssSelector));
-            button.Click();
+            try
+            {
+                // Find the button element by its CSS selector and click it
+                IWebElement button = _driver.FindElement(By.CssSelector(cssSelector));
+                button.Click();
+                return "Done.";
+            }
+            catch (NoSuchElementException ex)
+            {
+                return $"Button with CSS selector '{cssSelector}' not found: {ex.Message}";
+            }
+            catch (ElementNotInteractableException ex)
+            {
+                return $"Button with CSS selector '{cssSelector}' is not interactable: {ex.Message}";
+            }
+            catch (Exception ex)
+            {
+                return $"An error occurred while clicking the button with CSS selector '{cssSelector}': {ex.Message}";
+            }
         }
 
-        public void SendKeysToInput(string cssSelector, string keys)
+        public string SendKeysToInput(string cssSelector, string keys)
         {
-            // Find the input element by its CSS selector and send keys to it
-            IWebElement input = _driver.FindElement(By.CssSelector(cssSelector));
-            input.SendKeys(keys);
+            try
+            {
+                // Find the input element by its CSS selector and send keys to it
+                IWebElement input = _driver.FindElement(By.CssSelector(cssSelector));
+                input.SendKeys(keys);
+                return "Done.";
+            }
+            catch (NoSuchElementException ex)
+            {
+                return $"Input element with CSS selector '{cssSelector}' not found: {ex.Message}";
+            }
+            catch (ElementNotInteractableException ex)
+            {
+                return $"Input element with CSS selector '{cssSelector}' is not interactable: {ex.Message}";
+            }
+            catch (Exception ex)
+            {
+                return $"An error occurred while sending keys to the input element with CSS selector '{cssSelector}': {ex.Message}";
+            }
         }
 
         public void Close()
