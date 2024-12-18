@@ -75,6 +75,9 @@ namespace SeleniumTest.Helper
 
         private async Task<string> CallTools(ChatToolCall toolCall)
         {
+            Console.WriteLine($"Calling tool: {toolCall.FunctionName}");
+            Console.WriteLine($"Arguments: {toolCall.FunctionArguments}");
+
             switch (toolCall.FunctionName)
             {
                 case nameof(Browser.NavigateToUrl):
@@ -94,6 +97,9 @@ namespace SeleniumTest.Helper
                         using JsonDocument argumentsJson = JsonDocument.Parse(toolCall.FunctionArguments);
                         string? description = argumentsJson.RootElement.GetProperty("description").GetString();
                         string cssSelector = await browser.GetCssSelector(description, this);
+
+                        Console.WriteLine($"Found CSS selector: {cssSelector}");
+
                         return cssSelector;
                     }
 
@@ -101,7 +107,11 @@ namespace SeleniumTest.Helper
                     {
                         using JsonDocument argumentsJson = JsonDocument.Parse(toolCall.FunctionArguments);
                         string? cssSelector = argumentsJson.RootElement.GetProperty("cssSelector").GetString();
-                        return browser.ClickButton(cssSelector);
+                        string status = browser.ClickButton(cssSelector);
+
+                        Console.WriteLine($"Click status: {status}");
+
+                        return status;
                     }
 
                 case nameof(Browser.SendKeysToInput):
@@ -109,7 +119,11 @@ namespace SeleniumTest.Helper
                         using JsonDocument argumentsJson = JsonDocument.Parse(toolCall.FunctionArguments);
                         string? cssSelector = argumentsJson.RootElement.GetProperty("cssSelector").GetString();
                         string? keys = argumentsJson.RootElement.GetProperty("keys").GetString();
-                        return browser.SendKeysToInput(cssSelector, keys);
+                        string status = browser.SendKeysToInput(cssSelector, keys);
+
+                        Console.WriteLine($"Send keys status: {status}");
+
+                        return status;
                     }
 
                 case nameof(Browser.Close):

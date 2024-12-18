@@ -30,7 +30,7 @@ namespace SeleniumTest.Models
                         "properties": {
                                     "description": {
                                         "type": "string",
-                                        "description": "Description of the element to find"
+                                        "description": "Precise description of the element to find."
                                     }
                                 },
                         "required": ["description"]

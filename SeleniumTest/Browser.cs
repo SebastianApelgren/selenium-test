@@ -58,7 +58,9 @@ namespace SeleniumTest
 
             for (int i = 0; i < 2; i++)
             {
-                string halfHtml = html.Substring(i * html.Length / 2, (i + 1) * html.Length / 2 - 1);
+                int startIndex = i * (html.Length / 2 - 30);
+                int length = Math.Min(html.Length - startIndex, html.Length / 2 + 30);
+                string halfHtml = html.Substring(startIndex, length);
 
                 List<ChatMessage> messages = await openAiHelper.CompleteMessagesAsync(halfHtml, sysPrompt);
 

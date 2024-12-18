@@ -22,12 +22,6 @@ namespace SeleniumTest
             while (true)
             {
 
-                for (int i = 0; i < chatMessages.Count; i++)
-                {
-                    Console.WriteLine(chatMessages[i]);
-                    counter++;
-                }
-
                 Console.WriteLine("What do you want to do next?");
                 query = Console.ReadLine();
 

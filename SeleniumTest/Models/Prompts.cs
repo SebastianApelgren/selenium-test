@@ -13,9 +13,7 @@ Based on the user query, you will use these functions to perform their request a
 Your workflow will, for the most time, be: 
 - navigate to an URL.
 - get the CSS selector for the element you describe.
-- make one or multiple function calls such as press buttons or fill input fields.
-
-Don't forget to check if there is a cookies pop up when you open a new url by asking for the CSS selector for the 'Accept all' button, if it isn't found then most likely there's no cookies pop up on the page.";
+- make one or multiple function calls such as press buttons or fill input fields.";
 
         public const string WebNavigatorPromptMultipleCssDescriptions = @"You are a assistant that helps users navigate the web. You can navigate to any URL, get the css selectors of elements you describe, click a button, and send keys to an input field. 
 Based on the user query, you will use these functions to perform their request and return Done when you are done. You can return Done with function calls in the same response.
