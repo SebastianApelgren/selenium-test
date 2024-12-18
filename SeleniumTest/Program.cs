@@ -1,5 +1,6 @@
 ﻿using OpenAI.Chat;
 using SeleniumTest.Helper;
+using SeleniumTest.Models;
 
 namespace SeleniumTest
 {
@@ -10,9 +11,11 @@ namespace SeleniumTest
             OpenAiHelper openAiHelper = new OpenAiHelper(SecretManager.GetOpenAiApiKey());
 
             Console.WriteLine("Hello, what website do you want to go to?");
-            string query = Console.ReadLine();
+            string? query = Console.ReadLine();
 
-            List<ChatMessage> chatMessages = await openAiHelper.CompleteMessagesAsync(query);
+            string sysPromt = Prompts.WebNavigatorPromptOneCssDescription;
+
+            List<ChatMessage> chatMessages = await openAiHelper.CompleteMessagesWithToolsAsync(query, sysPromt);
 
             int counter = 0;
 
@@ -33,7 +36,7 @@ namespace SeleniumTest
                     break;
                 }
 
-                chatMessages = await openAiHelper.CompleteMessagesAsync(query, chatMessages);
+                chatMessages = await openAiHelper.CompleteMessagesWithToolsAsync(query, messages:chatMessages);
             }
         }
 
@@ -52,11 +55,6 @@ namespace SeleniumTest
             // Fill the search box and submit the search
             browser.SendKeysToInput("#center > yt-searchbox > div.ytSearchboxComponentInputBox > form > input", searchQuery);
             browser.ClickButton("#center > yt-searchbox > button");
-
-            string htmlSource = browser.GetHtml();
-            int tokenAmount = htmlSource.TokenCounter();
-
-            Console.WriteLine(tokenAmount);
 
             Console.ReadLine();
             browser.Close();

@@ -1,6 +1,9 @@
 ﻿using HtmlAgilityPack;
+using OpenAI.Chat;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using SeleniumTest.Models;
+using SeleniumTest.Helper;
 using System.Text;
 
 namespace SeleniumTest
@@ -15,13 +18,13 @@ namespace SeleniumTest
             _driver = new ChromeDriver();
         }
 
-        public void NavigateToUrl(string url)
+        public void NavigateToUrl(string? url)
         {
             // Navigate to the specified URL
             _driver.Navigate().GoToUrl(url);
         }
 
-        public string GetHtml()
+        private string GetHtml()
         {
             // Get the HTML source of the current page
             string html = _driver.PageSource;
@@ -47,7 +50,30 @@ namespace SeleniumTest
             return doc.DocumentNode.OuterHtml;
         }
 
-        public string ClickButton(string cssSelector)
+        public async Task<string> GetCssSelector(string? description, OpenAiHelper openAiHelper)
+        {
+            string html = GetHtml();
+
+            string sysPrompt = string.Format(Prompts.FindSelectorPrompt, description);
+
+            for (int i = 0; i < 2; i++)
+            {
+                string halfHtml = html.Substring(i * html.Length / 2, (i + 1) * html.Length / 2 - 1);
+
+                List<ChatMessage> messages = await openAiHelper.CompleteMessagesAsync(halfHtml, sysPrompt);
+
+                string cssSelector = messages.Last().Content[0].Text;
+
+                if (cssSelector != "Not found")
+                {
+                    return cssSelector;
+                }
+            }
+
+            return "Not found";
+        }
+
+        public string ClickButton(string? cssSelector)
         {
             try
             {
@@ -70,7 +96,7 @@ namespace SeleniumTest
             }
         }
 
-        public string SendKeysToInput(string cssSelector, string keys)
+        public string SendKeysToInput(string? cssSelector, string? keys)
         {
             try
             {

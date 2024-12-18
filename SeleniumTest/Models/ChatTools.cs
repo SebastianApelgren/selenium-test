@@ -21,13 +21,19 @@ namespace SeleniumTest.Models
                 """u8.ToArray())
         );
 
-        private static readonly ChatTool getHtml = ChatTool.CreateFunctionTool(
-            functionName: nameof(Browser.GetHtml),
-            functionDescription: "Gets the cleaned HTML of the current page",
+        private static readonly ChatTool getCssSelector = ChatTool.CreateFunctionTool(
+            functionName: nameof(Browser.GetCssSelector),
+            functionDescription: "Gets the CSS selector of an element on the current page",
             functionParameters: BinaryData.FromBytes("""
                 {
                         "type": "object",
-                        "properties": {}
+                        "properties": {
+                                    "description": {
+                                        "type": "string",
+                                        "description": "Description of the element to find"
+                                    }
+                                },
+                        "required": ["description"]
                 }
                 """u8.ToArray())
         );
@@ -77,7 +83,7 @@ namespace SeleniumTest.Models
 
         public static ChatCompletionOptions Options = new()
         {
-            Tools = { navigateToUrl, clickButton, sendKeysToInput, close }
+            Tools = { navigateToUrl, getCssSelector, clickButton, sendKeysToInput, close }
         };
     }
 }

@@ -8,7 +8,7 @@ using SeleniumTest.Models;
 
 namespace SeleniumTest.Helper
 {
-    internal class OpenAiHelper
+    public class OpenAiHelper
     {
         private ChatClient client;
         private Browser browser = new Browser();
@@ -18,11 +18,11 @@ namespace SeleniumTest.Helper
             client = new(model: "gpt-4o-mini", apiKey:apiKey);
         }
 
-        public async Task<List<ChatMessage>> CompleteMessagesAsync(string query, List<ChatMessage> messages = null)
+        public async Task<List<ChatMessage>> CompleteMessagesWithToolsAsync(string? query, string? sysPrompt = null, List<ChatMessage>? messages = null)
         {
             ChatCompletionOptions options = ChatTools.Options;
 
-            messages = CreateOrAddMessages(query, messages);
+            messages = CreateOrAddMessages(sysPrompt, query, messages);
 
             bool requiresAction;
 
@@ -48,7 +48,7 @@ namespace SeleniumTest.Helper
 
                             foreach (ChatToolCall toolCall in completion.ToolCalls)
                             {
-                                string toolResult = CallTools(toolCall);
+                                string toolResult = await CallTools(toolCall);
 
                                 messages.Add(new ToolChatMessage(toolCall.Id, toolResult));
                             }
@@ -73,7 +73,7 @@ namespace SeleniumTest.Helper
             return messages;
         }
 
-        private string CallTools(ChatToolCall toolCall)
+        private async Task<string> CallTools(ChatToolCall toolCall)
         {
             switch (toolCall.FunctionName)
             {
@@ -84,28 +84,31 @@ namespace SeleniumTest.Helper
                         // the model may hallucinate arguments too. Consequently, it is important to do the
                         // appropriate parsing and validation before calling the function.
                         using JsonDocument argumentsJson = JsonDocument.Parse(toolCall.FunctionArguments);
-                        string url = argumentsJson.RootElement.GetProperty("url").GetString();
+                        string? url = argumentsJson.RootElement.GetProperty("url").GetString();
                         browser.NavigateToUrl(url);
                         break;
                     }
 
-                case nameof(Browser.GetHtml):
+                case nameof(Browser.GetCssSelector):
                     {
-                        return browser.GetHtml();
+                        using JsonDocument argumentsJson = JsonDocument.Parse(toolCall.FunctionArguments);
+                        string? description = argumentsJson.RootElement.GetProperty("description").GetString();
+                        string cssSelector = await browser.GetCssSelector(description, this);
+                        return cssSelector;
                     }
 
                 case nameof(Browser.ClickButton):
                     {
                         using JsonDocument argumentsJson = JsonDocument.Parse(toolCall.FunctionArguments);
-                        string cssSelector = argumentsJson.RootElement.GetProperty("cssSelector").GetString();
+                        string? cssSelector = argumentsJson.RootElement.GetProperty("cssSelector").GetString();
                         return browser.ClickButton(cssSelector);
                     }
 
                 case nameof(Browser.SendKeysToInput):
                     {
                         using JsonDocument argumentsJson = JsonDocument.Parse(toolCall.FunctionArguments);
-                        string cssSelector = argumentsJson.RootElement.GetProperty("cssSelector").GetString();
-                        string keys = argumentsJson.RootElement.GetProperty("keys").GetString();
+                        string? cssSelector = argumentsJson.RootElement.GetProperty("cssSelector").GetString();
+                        string? keys = argumentsJson.RootElement.GetProperty("keys").GetString();
                         return browser.SendKeysToInput(cssSelector, keys);
                     }
 
@@ -125,11 +128,21 @@ namespace SeleniumTest.Helper
             return "Done";
         }
 
-        private List<ChatMessage> CreateOrAddMessages(string query, List<ChatMessage> messages)
+        public async Task<List<ChatMessage>> CompleteMessagesAsync(string? query, string? sysPrompt = null, List<ChatMessage>? messages = null)
+        {
+            messages = CreateOrAddMessages(sysPrompt, query, messages);
+
+            ChatCompletion completion = await client.CompleteChatAsync(messages);
+
+            messages.Add(new AssistantChatMessage(completion));
+
+            return messages;
+        }
+
+        private List<ChatMessage> CreateOrAddMessages(string? sysPrompt, string? query, List<ChatMessage>? messages)
         {
             if (messages == null)
             {
-                string sysPrompt = Prompts.PromptNoHtml;
                 List<ChatMessage> createdMessages =
                     [
                         new SystemChatMessage(sysPrompt),
